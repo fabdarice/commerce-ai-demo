@@ -28,7 +28,7 @@ class SearchInventoryTool(BaseTool):
     ) -> Dict[str, Any]:
         criteria = {
             "search_criteria": {
-                "item_name": item,
+                "name": item,
                 "max_price": max_price if max_price else "Not specified",
                 "deadline": deadline if deadline else "Not specified",
             }

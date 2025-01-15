@@ -14,7 +14,7 @@ from app.state.state import AgentState
 class Agent:
     def __init__(self, model: ChatOpenAI, tools: List[BaseTool], system_msg=""):
         self.tools = {t.name: t for t in tools}
-        self.model = model.bind_tools(tools=tools, tool_choice="auto")
+        self.model = model.bind_tools(tools=tools)
         self.system_msg = system_msg
 
     def init_graph(self):

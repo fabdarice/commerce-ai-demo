@@ -44,6 +44,10 @@ agent.init_graph()
 #
 initial_input = {"messages": []}
 
+# Define ANSI escape codes for colors
+WARNING_COLOR = "\033[93m"  # Yellow
+ENDC = "\033[0m"  # Reset to default
+
 for event in agent.graph.stream(initial_input):
     for v in event.values():
-        print(v)
+        print(f"{WARNING_COLOR}{v}{ENDC}")
