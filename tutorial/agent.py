@@ -3,6 +3,8 @@ from uuid import uuid4
 from langchain_core.messages import SystemMessage, ToolMessage, AnyMessage
 import operator
 
+from langchain_core.tools import BaseTool
+from langchain_openai import ChatOpenAI
 from langgraph.graph import END, StateGraph
 
 
@@ -34,7 +36,9 @@ class AgentState(TypedDict):
 
 
 class Agent:
-    def __init__(self, model, tools, checkpointer, system=""):  # <1>
+    def __init__(
+        self, model: ChatOpenAI, tools: List[BaseTool], checkpointer, system=""
+    ):  # <1>
         self.system = system
         graph = StateGraph(AgentState)
         graph.add_node("llm", self.call_openai)
@@ -57,15 +61,11 @@ class Agent:
         messages = state["messages"]
         if self.system:
             messages = [SystemMessage(content=self.system)] + messages
-        print("--- BEGIN OpenAI ---")
-        print(f"  Calling OpenAI with last message {messages[-1]}")
         message = self.model.invoke(messages)
-        print(f"  OpenAI response: {message}")
-        print("--- END OpenAI ---")
         return {"messages": [message]}
 
     def take_action(self, state: AgentState):
-        tool_calls = state["messages"][-1].tool_calls  # pylint: disable=all
+        tool_calls = state["messages"][-1].tool_calls
         results = []
         for t in tool_calls:
             if not t["name"] in self.tools:  # check for bad tool name from LLM
@@ -84,8 +84,5 @@ class Agent:
         return {"messages": results}
 
     def exists_action(self, state: AgentState):
-        print("--- BEGIN exists_action---")
         result = state["messages"][-1]
-        print(f"   Result: {len(result.tool_calls) > 0}")  # noqa
-        print("--- END exists_action---")
         return len(result.tool_calls) > 0

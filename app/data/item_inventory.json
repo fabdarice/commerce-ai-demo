@@ -1,0 +1,132 @@
+{
+  "items": [
+    {
+      "item": "Iphone 15 Pro",
+      "productId": "IP15P-001-AMZ",
+      "description": "The latest iPhone 15 Pro with advanced features, A17 chip, and stunning display.",
+      "price": 999.99,
+      "ecommerce_platform": "Amazon",
+      "delivery_deadline": 5
+    },
+    {
+      "item": "Iphone 15 Pro",
+      "productId": "IP15P-001-SHP",
+      "description": "The latest iPhone 15 Pro with advanced features, A17 chip, and stunning display.",
+      "price": 1024.99,
+      "ecommerce_platform": "Shopify",
+      "delivery_deadline": 7
+    },
+    {
+      "item": "Iphone 15 Pro",
+      "productId": "IP15P-001-WOO",
+      "description": "The latest iPhone 15 Pro with advanced features, A17 chip, and stunning display.",
+      "price": 998.99,
+      "ecommerce_platform": "WooCommerce",
+      "delivery_deadline": 6
+    },
+    {
+      "item": "Iphone 15 Pro",
+      "productId": "IP15P-001-ETS",
+      "description": "The latest iPhone 15 Pro with advanced features, A17 chip, and stunning display.",
+      "price": 1015.00,
+      "ecommerce_platform": "Etsy",
+      "delivery_deadline": 8
+    },
+    {
+      "item": "Samsung TV 65\"",
+      "productId": "STV65-001-AMZ",
+      "description": "Samsung 65-inch UHD Smart TV with high-definition resolution and smart capabilities.",
+      "price": 799.99,
+      "ecommerce_platform": "Amazon",
+      "delivery_deadline": 4
+    },
+    {
+      "item": "Samsung TV 65\"",
+      "productId": "STV65-001-SHP",
+      "description": "Samsung 65-inch UHD Smart TV with high-definition resolution and smart capabilities.",
+      "price": 819.99,
+      "ecommerce_platform": "Shopify",
+      "delivery_deadline": 5
+    },
+    {
+      "item": "Samsung TV 65\"",
+      "productId": "STV65-001-WOO",
+      "description": "Samsung 65-inch UHD Smart TV with high-definition resolution and smart capabilities.",
+      "price": 789.99,
+      "ecommerce_platform": "WooCommerce",
+      "delivery_deadline": 6
+    },
+    {
+      "item": "Samsung TV 65\"",
+      "productId": "STV65-001-ETS",
+      "description": "Samsung 65-inch UHD Smart TV with high-definition resolution and smart capabilities.",
+      "price": 809.99,
+      "ecommerce_platform": "Etsy",
+      "delivery_deadline": 7
+    },
+    {
+      "item": "LG 4K 65\"",
+      "productId": "LG4K65-001-AMZ",
+      "description": "LG 65-inch 4K UHD TV with HDR, Dolby Vision, and AI ThinQ technology.",
+      "price": 899.99,
+      "ecommerce_platform": "Amazon",
+      "delivery_deadline": 4
+    },
+    {
+      "item": "LG 4K 65\"",
+      "productId": "LG4K65-001-SHP",
+      "description": "LG 65-inch 4K UHD TV with HDR, Dolby Vision, and AI ThinQ technology.",
+      "price": 919.99,
+      "ecommerce_platform": "Shopify",
+      "delivery_deadline": 6
+    },
+    {
+      "item": "LG 4K 65\"",
+      "productId": "LG4K65-001-WOO",
+      "description": "LG 65-inch 4K UHD TV with HDR, Dolby Vision, and AI ThinQ technology.",
+      "price": 889.99,
+      "ecommerce_platform": "WooCommerce",
+      "delivery_deadline": 5
+    },
+    {
+      "item": "LG 4K 65\"",
+      "productId": "LG4K65-001-ETS",
+      "description": "LG 65-inch 4K UHD TV with HDR, Dolby Vision, and AI ThinQ technology.",
+      "price": 909.99,
+      "ecommerce_platform": "Etsy",
+      "delivery_deadline": 7
+    },
+    {
+      "item": "Coinbase Hat Black",
+      "productId": "CHB-001-AMZ",
+      "description": "Coinbase branded black cap, stylish and perfect for crypto enthusiasts.",
+      "price": 24.99,
+      "ecommerce_platform": "Amazon",
+      "delivery_deadline": 3
+    },
+    {
+      "item": "Coinbase Hat Black",
+      "productId": "CHB-001-SHP",
+      "description": "Coinbase branded black cap, stylish and perfect for crypto enthusiasts.",
+      "price": 27.49,
+      "ecommerce_platform": "Shopify",
+      "delivery_deadline": 5
+    },
+    {
+      "item": "Coinbase Hat Black",
+      "productId": "CHB-001-WOO",
+      "description": "Coinbase branded black cap, stylish and perfect for crypto enthusiasts.",
+      "price": 23.99,
+      "ecommerce_platform": "WooCommerce",
+      "delivery_deadline": 4
+    },
+    {
+      "item": "Coinbase Hat Black",
+      "productId": "CHB-001-ETS",
+      "description": "Coinbase branded black cap, stylish and perfect for crypto enthusiasts.",
+      "price": 25.99,
+      "ecommerce_platform": "Etsy",
+      "delivery_deadline": 6
+    }
+  ]
+}
