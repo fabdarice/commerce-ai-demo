@@ -1,40 +1,35 @@
+from typing import List
+
 from langchain_core.tools import BaseTool
-import os
 from langchain_openai.chat_models import ChatOpenAI
 from langgraph.graph import StateGraph, END
-
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai.chat_models import ChatOpenAI
 
-from typing import List
-
-from langgraph.prebuilt.tool_node import json
-
-
 from app.prompts.customer_request_prompt import CUSTOMER_REQUEST_PROMPT
-from app.prompts.search_inventory_prompt import SEARCH_INVENTORY_PROMPT
+from app.prompts.get_best_match_prompt import GET_BEST_MATCH_PROMPT
 from app.state.state import AgentState
 
 
 class Agent:
     def __init__(self, model: ChatOpenAI, tools: List[BaseTool], system_msg=""):
         self.tools = {t.name: t for t in tools}
-        self.model = model.bind_tools(tools)
+        self.model = model.bind_tools(tools=tools, tool_choice="auto")
         self.system_msg = system_msg
 
     def init_graph(self):
         graph = StateGraph(AgentState)
         graph.add_node("purchase_request_node", self.customer_request)
         graph.add_node("extract_item_node", self.extract_item)
-        graph.add_node("search_inventory_node", self.search_inventory)
+        graph.add_node("get_best_match_node", self.get_best_match)
         graph.add_conditional_edges(
             "purchase_request_node",
             self.is_extract_item,
             {True: "extract_item_node", False: "purchase_request_node"},
         )
-        graph.add_edge("extract_item_node", "search_inventory_node")
+        graph.add_edge("extract_item_node", "get_best_match_node")
         graph.set_entry_point("purchase_request_node")
-        graph.set_finish_point("search_inventory_node")
+        graph.set_finish_point("get_best_match_node")
         self.graph = graph.compile(
             # interrupt_before=[
             #     "action"
@@ -42,15 +37,19 @@ class Agent:
         )
 
     def customer_request(self, state: AgentState):
-        print("Hello! What would you live to buy today?")
+        if state["messages"]:
+            print(state["messages"][-1].content)
+        else:
+            greeting = "Hello! What are you looking to purchase today?"
+            print(greeting)  # Display the greeting to the user
+
         messages = [
             SystemMessage(content=CUSTOMER_REQUEST_PROMPT),
-            HumanMessage(content=input("Enter your request: ")),
+            HumanMessage(content=input()),
         ]
 
         try:
             result = self.model.invoke(messages)
-
             return {"messages": [result]}
         except Exception as e:
             print(f"Error in calling tool: {e}")
@@ -76,25 +75,26 @@ class Agent:
             )
         return {"messages": results}
 
-    def search_inventory(self, state: AgentState):
-        print("--------------- SEARCH INVENTORY -------------")
+    def get_best_match(self, state: AgentState):
+        print("--------------- GET BEST MATCH FROM INVENTORY-------------")
+        # Ensure the last message is a ToolMessage and extract its content
+        last_message = state["messages"][-1]
+        if isinstance(last_message, ToolMessage):
+            content = last_message.content
+        else:
+            raise ValueError("Expected the last message to be a ToolMessage")
+
+        messages = [
+            SystemMessage(content=GET_BEST_MATCH_PROMPT),
+            HumanMessage(content=content),
+        ]
+
         try:
-            with open(
-                os.path.join(os.getcwd(), "app/data/item_inventory.json"), "r"
-            ) as file:
-                inventory_json = json.load(file)
-                inventory = json.dumps(inventory_json, indent=2)
-
-                messages = [
-                    SystemMessage(content=SEARCH_INVENTORY_PROMPT + inventory),
-                    state["messages"][-1],
-                ]
-
-                result = self.model.invoke(messages)
-
-                return {"messages": [result]}
+            result = self.model.invoke(messages)
+            print(f"GET BEST MATCH Result: {result}")
+            return {"messages": [result]}
         except Exception as e:
-            print(f"Error in calling tool: {e}")
+            print(f"Error in calling LLM: {e}")
             raise
 
     def is_extract_item(self, state: AgentState):

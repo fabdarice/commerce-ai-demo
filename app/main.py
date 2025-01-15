@@ -14,7 +14,7 @@ _ = load_dotenv()
 
 
 model = ChatOpenAI(model="gpt-4o-mini-2024-07-18")
-tools: List[BaseTool] = [SearchInventoryTool()]
+tools: List[BaseTool] = [SearchInventoryTool(), CreateChargeTool()]
 
 agent = Agent(model, tools)
 agent.init_graph()
