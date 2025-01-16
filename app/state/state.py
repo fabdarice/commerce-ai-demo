@@ -6,6 +6,6 @@ from app.state.item import Item
 
 
 class AgentState(TypedDict):
-    item_requested: Optional[Item]
-    inventory: Optional[List[Item]]
+    best_matches: Optional[List[Item]]
+    selected_item: Optional[Item]
     messages: Annotated[list, add_messages]
