@@ -8,8 +8,10 @@ from langgraph.graph import StateGraph
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
 from langchain_openai.chat_models import ChatOpenAI
 
+from app.config.web3 import Web3
 from app.prompts.customer_request_prompt import CUSTOMER_REQUEST_PROMPT
 from app.prompts.get_best_match_prompt import GET_BEST_MATCH_PROMPT
+from app.services.commerce import CommerceService
 from app.state.item import Item
 from app.state.state import AgentState
 
@@ -19,6 +21,8 @@ class Agent:
         self.tools = {t.name: t for t in tools}
         self.model = model.bind_tools(tools=tools, tool_choice="auto")
         self.system_msg = system_msg
+        self.web3 = Web3()
+        self.commerce_svc = CommerceService()
 
     def init_graph(self):
         graph = StateGraph(AgentState)
@@ -26,7 +30,8 @@ class Agent:
         graph.add_node("extract_item_node", self.extract_item)
         graph.add_node("get_best_match_node", self.get_best_match)
         graph.add_node("select_item_from_matches_node", self.select_item_from_matches)
-        graph.add_node("create_charge_node", self.create_charge)
+        graph.add_node("confirm_selection_node", self.confirm_selection)
+        graph.add_node("execute_charge_node", self.execute_charge)
         graph.add_conditional_edges(
             "purchase_request_node",
             self.is_extract_item,
@@ -40,13 +45,19 @@ class Agent:
         graph.add_conditional_edges(
             "select_item_from_matches_node",
             self.is_selected_item,
-            {True: "create_charge_node", False: "select_item_from_matches_node"},
+            {True: "confirm_selection_node", False: "select_item_from_matches_node"},
+        )
+        graph.add_conditional_edges(
+            "confirm_selection_node",
+            self.is_confirmed_item,
+            {True: "execute_charge_node", False: "purchase_request_node"},
         )
         graph.add_edge("extract_item_node", "get_best_match_node")
         graph.add_edge("get_best_match_node", "select_item_from_matches_node")
-        graph.add_edge("select_item_from_matches_node", "create_charge_node")
+        graph.add_edge("select_item_from_matches_node", "confirm_selection_node")
+        graph.add_edge("confirm_selection_node", "execute_charge_node")
         graph.set_entry_point("purchase_request_node")
-        graph.set_finish_point("create_charge_node")
+        graph.set_finish_point("execute_charge_node")
         self.graph = graph.compile(
             # interrupt_before=[
             #     "action"
@@ -57,7 +68,7 @@ class Agent:
         if state["messages"]:
             print(state["messages"][-1].content)
         else:
-            greeting = "Hello! What are you looking to purchase today?"
+            greeting = f"[{self.web3.address} | {self.web3.balances('usdc')} USDC] Hello! What are you looking to purchase today?"
             print(greeting)  # Display the greeting to the user
 
         messages = [
@@ -127,7 +138,7 @@ class Agent:
         best_matches: List[Item] = [
             Item(
                 p.get("item"),
-                p.get("productid"),
+                p.get("description"),
                 p.get("price"),
                 p.get("delivery_time"),
             )
@@ -137,6 +148,8 @@ class Agent:
         return {"messages": [result], "best_matches": best_matches}
 
     def select_item_from_matches(self, state: AgentState):
+        if "best_matches" not in state or not state["best_matches"]:
+            return {}
         print("We found the following items available:")
         counter = 1
         for best_match in state["best_matches"]:
@@ -145,17 +158,33 @@ class Agent:
         selection = input(
             "Please select the number of the item you would like to purchase: "
         )
-        selected_item = state["best_matches"][int(selection) - 1]
-        print(f"You have selected: {selected_item}")
+        print(f"Selection: {selection}")
+        print(f"Selection: {int(selection)}")
+        print(f"Selection: {state["best_matches"]}")
+        selected_item: Item = state["best_matches"][int(selection) - 1]
+        print(f"selected: {selected_item}")
         return {
-            selected_item: selected_item,
+            "selected_item": selected_item,
         }
 
-    def create_charge(self, state: AgentState):
-        print("Charge created")
+    def confirm_selection(self, state: AgentState):
+        print(f"You have selected: {state['selected_item']}")
+        print(f"Your current balance is: {self.web3.balances('usdc')} USDC")
+        response = input("Confirm selection? (y/n): ")
+        return {"messages": response}
 
-    def is_selected_item(self, state: AgentState):
-        return "selected_item" in state and state["selected_item"]
+    def execute_charge(self, state: AgentState):
+        self.commerce_svc.create_charge_and_hydrate(
+            state["selected_item"], self.web3.address
+        )
+
+    def is_confirmed_item(self, state: AgentState) -> bool:
+        if "selected_item" in state and state["selected_item"]:
+            return state["messages"][-1].content.lower() == "y"
+        return False
+
+    def is_selected_item(self, state: AgentState) -> bool:
+        return "selected_item" in state and state["selected_item"] is not None
 
     def is_available_matches(self, state: AgentState):
         print(state)

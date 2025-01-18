@@ -1,20 +1,16 @@
 from typing import List
-from IPython.display import Image, display
 from dotenv import load_dotenv
-from langchain_core.messages import AIMessage
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
-from langgraph.prebuilt import ToolNode
 
 from app.agent import Agent
-from app.tools.charge_management import CreateChargeTool
 from app.tools.inventory import SearchInventoryTool
 
 _ = load_dotenv()
 
 
 model = ChatOpenAI(model="gpt-4o-mini-2024-07-18")
-tools: List[BaseTool] = [SearchInventoryTool(), CreateChargeTool()]
+tools: List[BaseTool] = [SearchInventoryTool()]
 
 agent = Agent(model, tools)
 agent.init_graph()

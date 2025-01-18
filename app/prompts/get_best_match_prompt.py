@@ -24,10 +24,8 @@ Important Notes:
 Output Format:
  [{
     "item": Name of the item,
-    "product_id": Product ID,
     "description": Description of the item,
     "price": price,
-    "ecommerce_platform": plateform,
     "delivery_time": shipping time 
     }]
 """
