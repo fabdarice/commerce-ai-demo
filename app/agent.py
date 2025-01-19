@@ -184,6 +184,12 @@ class Agent:
             charge_id, self.web3.address
         )
         print(f"Transfer Intent: {transfer_intent}")
+        tx = self.web3.invoke_transfers_contract(
+            transfer_intent.metadata.contract_address,
+            transfer_intent.to_onchain_params,
+        )
+        print(f"Submitting Transaction Onchain: {tx}")
+        return {}
 
     def is_confirmed_item(self, state: AgentState) -> bool:
         if "selected_item" in state and state["selected_item"]:

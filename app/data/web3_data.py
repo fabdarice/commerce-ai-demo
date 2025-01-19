@@ -59,3 +59,19 @@ class TransferIntent:
         )
 
         return TransferIntent(call_data=call_data_obj, metadata=metadata_obj)
+
+    @property
+    def to_onchain_params(self) -> dict:
+        return {
+            "_intent.recipientAmount": self.call_data.recipient_amount,
+            "_intent.deadline": self.call_data.deadline,
+            "_intent.recipient": self.call_data.recipient,
+            "_intent.recipientCurrency": self.call_data.recipient_currency,
+            "_intent.feeAmount": self.call_data.fee_amount,
+            "_intent.refundDestination": self.call_data.refund_destination,
+            "_intent.id": self.call_data.id,
+            "_intent.operator": self.call_data.operator,
+            "_intent.prefix": self.call_data.prefix,
+            "_signatureTransferData.owner": self.metadata.sender,
+            "_signatureTransferData.signature": self.call_data.signature,
+        }

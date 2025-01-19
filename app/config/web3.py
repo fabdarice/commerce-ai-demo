@@ -1,8 +1,9 @@
 from typing import List, Dict, Any
 import os
-import json
 
 from cdp import Cdp, Wallet
+
+from app.config.abi import TRANSFER_ABI
 
 
 class Web3:
@@ -30,20 +31,24 @@ class Web3:
 
     @property
     def address(self):
-        return self.wallet.default_address.address_id
+        if self.wallet and self.wallet.default_address:
+            return self.wallet.default_address.address_id
+        raise ValueError("No wallet found")
 
     def balances(self, currency=None):
         return self.wallet.balance(currency) if currency else self.wallet.balances()
 
-    def invoke_contract(
+    def invoke_transfers_contract(
         self,
         contract_address: str,
-        abi: List[Dict[str, Any]],
-        method: str,
         args: Dict[str, Any],
     ):
-        return self.wallet.invoke_contract(contract_address, abi, method, args)
+        return self.wallet.invoke_contract(
+            contract_address, TRANSFER_ABI, "subsidizedTransferToken", args
+        )
 
+
+# Function: subsidizedTransferToken((uint256,uint256,address,address,address,uint256,bytes16,address,bytes,bytes), (address,bytes))
 
 # abi = [
 #     {
