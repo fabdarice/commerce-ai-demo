@@ -41,10 +41,13 @@ class Web3:
     def invoke_transfers_contract(
         self,
         contract_address: str,
-        args: Dict[str, Any],
+        args: Any,
     ):
         return self.wallet.invoke_contract(
-            contract_address, TRANSFER_ABI, "subsidizedTransferToken", args
+            contract_address=contract_address,
+            abi=TRANSFER_ABI,
+            method="transferTokenPreApproved",
+            args=args,
         )
 
 

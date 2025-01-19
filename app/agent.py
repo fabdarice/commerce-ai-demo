@@ -189,6 +189,10 @@ class Agent:
             transfer_intent.to_onchain_params,
         )
         print(f"Submitting Transaction Onchain: {tx}")
+        tx.wait()
+        print(
+            f"Payment Complete. Receipt: https://commerce.coinbase.com/pay/{charge_id}/receipt"
+        )
         return {}
 
     def is_confirmed_item(self, state: AgentState) -> bool:
