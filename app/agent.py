@@ -6,9 +6,9 @@ from langchain_core.tools import BaseTool
 from langchain_openai.chat_models import ChatOpenAI
 from langgraph.graph import StateGraph
 from langchain_core.messages import AIMessage, HumanMessage, SystemMessage, ToolMessage
-from langchain_openai.chat_models import ChatOpenAI
 
 from app.config.web3 import Web3
+from app.data.web3_data import TransferIntent
 from app.prompts.customer_request_prompt import CUSTOMER_REQUEST_PROMPT
 from app.prompts.get_best_match_prompt import GET_BEST_MATCH_PROMPT
 from app.services.commerce import CommerceService
@@ -119,33 +119,38 @@ class Agent:
 
         try:
             result = self.model.invoke(messages)
+            if result is None:
+                raise ValueError("No result from model")
+            content = str(result.content)
             print(f"GET BEST MATCH Result: {result}")
-            match = re.search(r"```json\s*(.*?)\s*```", result.content, re.DOTALL)
+            match = re.search(r"```json\s*(.*?)\s*```", content, re.DOTALL)
             if match:
                 json_str = match.group(1)
             else:
                 json_str = result.content
-            parsed_items = json.loads(json_str)
 
+            if type(json_str) == str:
+                parsed_items = json.loads(json_str)
+            else:
+                raise json.JSONDecodeError("Invalid JSON", "", 0)
+
+            best_matches: List[Item] = [
+                Item(
+                    p.get("item"),
+                    p.get("description"),
+                    p.get("price"),
+                    p.get("delivery_time"),
+                )
+                for p in parsed_items
+            ]
+
+            return {"messages": [result], "best_matches": best_matches}
         except json.JSONDecodeError:
             print("LLM output is not valid JSON")
             parsed_items = []
-
         except Exception as e:
             print(f"Error in calling LLM: {e}")
             raise
-
-        best_matches: List[Item] = [
-            Item(
-                p.get("item"),
-                p.get("description"),
-                p.get("price"),
-                p.get("delivery_time"),
-            )
-            for p in parsed_items
-        ]
-
-        return {"messages": [result], "best_matches": best_matches}
 
     def select_item_from_matches(self, state: AgentState):
         if "best_matches" not in state or not state["best_matches"]:
@@ -160,7 +165,7 @@ class Agent:
         )
         print(f"Selection: {selection}")
         print(f"Selection: {int(selection)}")
-        print(f"Selection: {state["best_matches"]}")
+        print(f"Selection: {state['best_matches']}")
         selected_item: Item = state["best_matches"][int(selection) - 1]
         print(f"selected: {selected_item}")
         return {
@@ -174,9 +179,11 @@ class Agent:
         return {"messages": response}
 
     def execute_charge(self, state: AgentState):
-        self.commerce_svc.create_charge_and_hydrate(
-            state["selected_item"], self.web3.address
+        charge_id: str = self.commerce_svc.create_charge(state["selected_item"])
+        transfer_intent: TransferIntent = self.commerce_svc.transact_onchain(
+            charge_id, self.web3.address
         )
+        print(f"Transfer Intent: {transfer_intent}")
 
     def is_confirmed_item(self, state: AgentState) -> bool:
         if "selected_item" in state and state["selected_item"]:
