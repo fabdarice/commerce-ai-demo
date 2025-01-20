@@ -23,6 +23,7 @@ class Agent:
         self.system_msg = system_msg
         self.web3 = Web3()
         self.commerce_svc = CommerceService()
+        self.init_graph()
 
     def init_graph(self):
         graph = StateGraph(AgentState)
@@ -58,30 +59,25 @@ class Agent:
         graph.add_edge("confirm_selection_node", "execute_charge_node")
         graph.set_entry_point("purchase_request_node")
         graph.set_finish_point("execute_charge_node")
-        self.graph = graph.compile(
-            # interrupt_before=[
-            #     "action"
-            # ],  # Add an interrupt before the action node (i.e: we can add manual approval before running a tool)
-        )
+        self.graph = graph.compile()
 
     def customer_request(self, state: AgentState):
         if state["messages"]:
-            print(state["messages"][-1].content)
-        else:
-            greeting = f"[{self.web3.address} | {self.web3.balances('usdc')} USDC] Hello! What are you looking to purchase today?"
-            print(greeting)  # Display the greeting to the user
+            content = state["messages"][-1].content
+            print("customer_request.content: ", content)
 
-        messages = [
-            SystemMessage(content=CUSTOMER_REQUEST_PROMPT),
-            HumanMessage(content=input()),
-        ]
+            messages = [
+                SystemMessage(content=CUSTOMER_REQUEST_PROMPT),
+                HumanMessage(content=content),
+            ]
 
-        try:
-            result = self.model.invoke(messages)
-            return {"messages": [result]}
-        except Exception as e:
-            print(f"Error in calling tool: {e}")
-            raise
+            try:
+                result = self.model.invoke(messages)
+                return {"messages": [result]}
+            except Exception as e:
+                print(f"Error in calling tool: {e}")
+                raise e
+        return {}
 
     def extract_item(self, state: AgentState):
         print("----- Extract Item -------")
