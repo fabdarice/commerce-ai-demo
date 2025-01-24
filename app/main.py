@@ -1,4 +1,4 @@
-from typing import List, Dict
+from typing import List
 from uuid import uuid4
 from dotenv import load_dotenv
 from langchain_core.messages import AIMessage, HumanMessage
@@ -6,6 +6,7 @@ from langchain_core.messages.tool import ToolMessage
 from langchain_core.tools import BaseTool
 from langchain_openai import ChatOpenAI
 from flask import Flask, request, jsonify
+from flask_cors import CORS
 
 from app.agent import Agent
 from app.state.state import AgentState
@@ -14,6 +15,7 @@ from app.tools.inventory import SearchInventoryTool
 _ = load_dotenv()
 
 app = Flask(__name__)
+CORS(app, resources={r"/agent": {"origins": "*"}}, supports_credentials=True)
 
 SESSION_STATES = {}
 
@@ -23,7 +25,7 @@ tools: List[BaseTool] = [SearchInventoryTool()]
 agent = Agent(model, tools)
 
 
-@app.route("/agent", methods=["POST"])
+@app.route("/agent", methods=["POST", "OPTIONS"])
 def agent_route():
     """
     This endpoint is called repeatedly by the client with user input.
@@ -33,6 +35,9 @@ def agent_route():
       "user_input": "iPhone 14"   # or "1", or "y", etc. based on the conversation
     }
     """
+    if request.method == "OPTIONS":
+        # Preflight request handled by flask-cors
+        return jsonify({"status": "OK"}), 200
     data = request.get_json() or {}
     session_id = data.get("session_id")
     user_input = data.get("user_input", "")
@@ -49,12 +54,8 @@ def agent_route():
         state["messages"].append(HumanMessage(content=user_input))
 
     # ---- Now run the next "step" in the graph ----
-    # The graph is compiled as a generator. We'll advance it by a single step,
-    # capturing the output. If we are at the finish node, we won't proceed further.
     response_messages = []
     try:
-        # The .stream(...) returns a generator that yields node transitions
-        # We'll just do a single iteration to move one step forward.
         step_gen = agent.graph.stream(state)
         event = next(step_gen, None)
 
@@ -65,16 +66,9 @@ def agent_route():
             )
         else:
             # event is typically a dict of {node_name: result_dict}
-            # We'll accumulate the node's output messages
             for node_result in event.values():
-                print("node_result: ", node_result)
-                # node_result might be a list or dict with "messages"
-                # Flatten them into a single list to return
                 if isinstance(node_result, dict) and "messages" in node_result:
                     extracted = node_result["messages"]
-                    print("extracted: ", extracted)
-                    # extracted can be a list of str/dict or LLM Message objects
-                    # unify them into a simpler JSON-friendly shape:
                     for msg in extracted:
                         if isinstance(msg, (AIMessage, ToolMessage)):
                             response_messages.append(
@@ -87,14 +81,8 @@ def agent_route():
                             response_messages.append(
                                 {"role": "assistant", "content": str(msg)}
                             )
-                else:
-                    print("pass")
-                    # Also handle scenario: node_result might directly have the info
-                    # or updates like "best_matches", "selected_item" etc.
-                    pass
 
     except StopIteration:
-        # Means the graph may have finished all steps in a single iteration
         response_messages.append(
             {"role": "system", "content": "Conversation has ended."}
         )
@@ -108,5 +96,4 @@ def agent_route():
 
 
 if __name__ == "__main__":
-    # Run Flask in debug mode (or not)
     app.run(debug=True)
